@@ -346,3 +346,11 @@
 - ต้องตั้งค่าที่ Supabase → Authentication → URL Configuration
   - Site URL
   - Redirect URLs `https://<โดเมน>/auth/**`
+
+### 12.7 แก้ build ล้มที่หน้า /dashboard (11 พ.ย. 2569)
+- อาการ: `Error occurred prerendering page "/dashboard"` เพราะตอน build ยังไม่มีค่า Supabase
+  - Next.js พยายามสร้างหน้าที่ต้องเข้าสู่ระบบไว้ล่วงหน้า
+- แก้: ทุกหน้าในระบบและหน้าเข้าสู่ระบบสร้างตอนเปิดใช้งานเสมอ (`dynamic = "force-dynamic"`)
+  - อ่าน cookie ก่อนตรวจค่า Supabase
+  - ถ้ายังไม่ได้ตั้งค่า ให้พาไปหน้า /setup
+- ยืนยันแล้วว่า Vercel build แบบ Next.js ถูกต้อง (ปัญหา Output Directory หายแล้ว)

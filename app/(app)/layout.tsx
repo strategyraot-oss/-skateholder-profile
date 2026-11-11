@@ -3,6 +3,9 @@ import Sidebar from "@/components/Sidebar";
 import { getSession } from "@/lib/auth";
 import { logout } from "@/app/(auth)/actions";
 
+// ทุกหน้าในระบบขึ้นกับผู้ใช้ที่เข้าสู่ระบบ จึงสร้างตอนเปิดใช้งานเสมอ (ไม่ prerender ตอน build)
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile } = await getSession();
   if (!user) redirect("/login");

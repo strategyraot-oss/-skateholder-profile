@@ -5,8 +5,9 @@ import { requireSupabaseEnv } from "./env";
 
 /** Client ฝั่ง server ที่ผูกกับ session (cookie) ของผู้ใช้ปัจจุบัน — สิทธิ์ตาม RLS */
 export async function createClient() {
-  const { url, key } = requireSupabaseEnv();
+  // อ่าน cookie ก่อน เพื่อให้ Next.js รู้ว่าหน้านี้ต้องสร้างตอนเปิดใช้งาน (ไม่ prerender ตอน build)
   const cookieStore = await cookies();
+  const { url, key } = requireSupabaseEnv();
   return createServerClient(url, key, {
     cookies: {
       getAll: () => cookieStore.getAll(),

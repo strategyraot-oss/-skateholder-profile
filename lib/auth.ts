@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "./supabase/server";
+import { supabaseEnv } from "./supabase/env";
 import type { Profile, UserRole } from "./types";
 
 /** ผู้ใช้ปัจจุบัน + profile (cache ต่อ 1 request) */
 export const getSession = cache(async () => {
+  if (!supabaseEnv()) redirect("/setup");
   const supabase = await createClient();
   const {
     data: { user },
