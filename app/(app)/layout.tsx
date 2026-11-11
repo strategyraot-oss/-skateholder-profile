@@ -7,17 +7,22 @@ import { logout } from "@/app/(auth)/actions";
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, profile } = await getSession();
+  const { user, profile, profileError } = await getSession();
   if (!user) redirect("/login");
 
   if (!profile?.active) {
+    const title = profileError ? "อ่านข้อมูลบัญชีไม่สำเร็จ" : !profile ? "ไม่พบข้อมูลบัญชีในระบบ" : "บัญชียังไม่ได้รับการเปิดใช้งาน";
+    const detail = profileError
+      ? "ระบบเข้าสู่ระบบได้ แต่อ่านข้อมูลสิทธิ์จากฐานข้อมูลไม่ได้ โปรดแจ้งผู้ดูแลระบบพร้อมข้อความด้านล่าง"
+      : !profile
+        ? `บัญชี ${user.email} ยังไม่มีข้อมูลในตาราง profiles (อาจสร้างบัญชีก่อนติดตั้งฐานข้อมูล) โปรดติดต่อกองประเมินผล`
+        : `ผู้ดูแลระบบยังไม่ได้กำหนดสิทธิ์และส่วนงานให้บัญชี ${user.email} โปรดติดต่อกองประเมินผล`;
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <div className="card max-w-md p-8 text-center">
-          <h1 className="text-lg font-semibold">บัญชียังไม่ได้รับการเปิดใช้งาน</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            ผู้ดูแลระบบยังไม่ได้กำหนดสิทธิ์และส่วนงานให้บัญชี {user.email} โปรดติดต่อกองประเมินผล
-          </p>
+          <h1 className="text-lg font-semibold">{title}</h1>
+          <p className="mt-2 text-sm text-gray-600">{detail}</p>
+          {profileError && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-left font-mono text-xs text-red-800">{profileError}</p>}
           <form action={logout} className="mt-6">
             <button className="btn-secondary">ออกจากระบบ</button>
           </form>

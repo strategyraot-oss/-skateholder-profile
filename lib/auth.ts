@@ -11,15 +11,26 @@ export const getSession = cache(async () => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { user: null, profile: null };
+  if (!user) return { user: null, profile: null, profileError: null };
 
-  const { data: profile } = await supabase
+  // แยกเป็น 2 คำสั่งง่าย ๆ (ไม่ใช้ embed) เพื่อลดจุดที่อาจผิดพลาด
+  const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, email, full_name, role, department_id, active, department:departments!profiles_department_id_fkey(id, code, name)")
+    .select("id, email, full_name, role, department_id, active")
     .eq("id", user.id)
     .maybeSingle<Profile>();
+  if (error) return { user, profile: null, profileError: `${error.code ?? ""} ${error.message}`.trim() };
+  if (!profile) return { user, profile: null, profileError: null };
 
-  return { user, profile: profile ?? null };
+  if (profile.department_id) {
+    const { data: dept } = await supabase
+      .from("departments")
+      .select("id, code, name")
+      .eq("id", profile.department_id)
+      .maybeSingle<{ id: string; code: string; name: string }>();
+    profile.department = dept ?? null;
+  }
+  return { user, profile, profileError: null };
 });
 
 /** ใช้ใน page ที่จำกัดสิทธิ์: ไม่มีสิทธิ์จะถูกพาไป Dashboard */
