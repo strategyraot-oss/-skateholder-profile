@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-thai), ui-sans-serif, system-ui, sans-serif;
+
+  /* สีหลัก: เขียวยางพารา */
+  --color-brand-50: #eefbf3;
+  --color-brand-100: #d6f5e1;
+  --color-brand-200: #b0e9c7;
+  --color-brand-300: #7cd6a6;
+  --color-brand-400: #47bc80;
+  --color-brand-500: #23a065;
+  --color-brand-600: #168151;
+  --color-brand-700: #136743;
+  --color-brand-800: #125237;
+  --color-brand-900: #10432f;
+  --color-brand-950: #07261a;
+
+  --color-surface: #f5f7f6;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-surface);
+  color: #1f2a24;
+  line-height: 1.6;
+}
+
+/* ส่วนประกอบพื้นฐาน (Tailwind v4 @utility) */
+@utility card {
+  @apply rounded-2xl border border-gray-200/80 bg-white shadow-sm;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition
+    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+}
+@utility btn-secondary {
+  @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+}
+@utility input {
+  @apply w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] outline-none transition
+    placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-gray-700;
+}
