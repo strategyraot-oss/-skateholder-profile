@@ -333,3 +333,16 @@
   - แก้โดยเพิ่ม `vercel.json` กำหนด `"framework": "nextjs"`
   - กำหนด region `sin1` (สิงคโปร์) ให้ใกล้ฐานข้อมูล Supabase
 - build และชุดทดสอบ (vitest) ผ่านแล้ว
+
+### 12.6 ปรับระบบเข้าสู่ระบบใหม่ (11 พ.ย. 2569)
+- ใช้ Supabase Auth ด้วย **Project URL + Anon Key เท่านั้น** (เลิกใช้ service_role key)
+- หน้าใหม่ ได้แก่ เข้าสู่ระบบ, สมัครใช้งาน, ลืมรหัสผ่าน, ตั้งรหัสผ่านใหม่, `/auth/confirm` และ `/setup`
+  - `/auth/confirm` รับลิงก์อีเมลได้ทุกแบบ: code, token_hash และ #access_token
+  - `/setup` แจ้งเมื่อยังไม่ได้ตั้งค่า Supabase แทนการ error ทั้งเว็บ
+- บัญชีใหม่ทุกบัญชียังไม่เปิดใช้งาน จนกว่าผู้ดูแลระบบจะกำหนดบทบาท/ส่วนงาน
+- ผู้ดูแลระบบ:
+  - สร้างบัญชีผ่าน signUp ด้วย client แยก จึงไม่กระทบ session ของตนเอง
+  - รีเซ็ตรหัสผ่านด้วยการส่งอีเมลลิงก์ (ไม่สามารถตั้งรหัสผ่านแทนผู้ใช้ได้ เพราะไม่ใช้ service_role key)
+- ต้องตั้งค่าที่ Supabase → Authentication → URL Configuration
+  - Site URL
+  - Redirect URLs `https://<โดเมน>/auth/**`

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui";
 import { ROLE_LABELS } from "@/lib/domain/reference";
 import { fmtDate } from "@/lib/format";
 import type { Department, FiscalYear, UserRole } from "@/lib/types";
-import { createUser, resetPassword, saveDepartment, saveFiscalYear, setCurrentFiscalYear, updateUser, type Result } from "./actions";
+import { createUser, sendPasswordReset, saveDepartment, saveFiscalYear, setCurrentFiscalYear, updateUser, type Result } from "./actions";
 
 export type UserRow = {
   id: string; email: string | null; full_name: string | null; role: UserRole; department_id: string | null;
@@ -84,7 +84,6 @@ function UserItem({ u, departments, isMe }: { u: UserRow; departments: Departmen
   const { pending, run, Msg } = useRun();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ full_name: u.full_name ?? "", role: u.role, department_id: u.department_id ?? "", active: u.active, rd: u.reviewer_departments });
-  const [pw, setPw] = useState("");
   const dept = departments.find((d) => d.id === u.department_id);
   return (
     <div className="p-4">
@@ -133,8 +132,10 @@ function UserItem({ u, departments, isMe }: { u: UserRow; departments: Departmen
               onClick={() => run(() => updateUser({ id: u.id, full_name: f.full_name, role: f.role, department_id: f.department_id || null, active: f.active, reviewer_departments: f.rd }))}>
               บันทึกสิทธิ์
             </button>
-            <input className="input max-w-52" placeholder="รหัสผ่านใหม่" value={pw} onChange={(e) => setPw(e.target.value)} />
-            <button className="btn-secondary" disabled={pending || !pw} onClick={() => run(() => resetPassword(u.id, pw), () => setPw(""))}>ตั้งรหัสผ่านใหม่</button>
+            <button className="btn-secondary" disabled={pending || !u.email}
+              onClick={() => window.confirm(`ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${u.email}?`) && run(() => sendPasswordReset(u.email))}>
+              ส่งอีเมลตั้งรหัสผ่านใหม่
+            </button>
             <Msg />
           </div>
         </div>

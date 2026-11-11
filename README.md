@@ -26,7 +26,7 @@
    ```
 5. (แนะนำ) ทดสอบสิทธิ์: วางทั้งไฟล์ `supabase/tests/rls_test.sql` ใน SQL Editor แล้ว Run
    ผลจะขึ้นเป็นข้อความ `ERROR: ผลทดสอบ RLS: ผ่านทั้งหมด ...` พร้อมรายการ ✔ (ขึ้นเป็น ERROR โดยตั้งใจ เพื่อยกเลิกข้อมูลทดสอบทั้งหมด)
-6. เมนู **Project Settings → API** จดค่า `Project URL`, `anon public key` และ `service_role key`
+6. เมนู **Project Settings → API** จดค่า `Project URL` และ `anon public key` (ระบบใช้เพียง 2 ค่านี้ ไม่ต้องใช้ service_role key)
 
 ### 2) GitHub (เก็บโค้ด)
 1. สร้าง repository ใหม่แบบ **Private** ที่ https://github.com/new
@@ -34,14 +34,32 @@
 
 ### 3) Vercel (รันระบบ)
 1. เข้า https://vercel.com ด้วยบัญชี GitHub → **Add New → Project** → เลือก repository
-2. เปิด **Environment Variables** ใส่ 3 ค่า
+2. เปิด **Environment Variables** ใส่ 2 ค่า
    | Name | Value |
    |---|---|
    | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public key |
-   | `SUPABASE_SERVICE_ROLE_KEY` | service_role key (ใช้สร้างบัญชีผู้ใช้ในหน้าตั้งค่า) |
 3. กด **Deploy** → ได้ลิงก์ระบบ เช่น `https://xxxx.vercel.app`
-4. ที่ Supabase → **Authentication → URL Configuration** ตั้ง Site URL เป็นลิงก์ Vercel
+   (หากลืมใส่ค่า เว็บจะพาไปหน้า `/setup` ที่บอกว่าขาดค่าใด — แก้ค่าแล้วต้อง **Redeploy** ทุกครั้ง)
+4. ที่ Supabase → **Authentication → URL Configuration**
+   - **Site URL** = ลิงก์ Vercel เช่น `https://xxxx.vercel.app`
+   - **Redirect URLs** เพิ่ม `https://xxxx.vercel.app/auth/**` (ลิงก์ยืนยันอีเมล/ตั้งรหัสผ่านจะกลับมาที่นี่)
+
+### 4) ระบบเข้าสู่ระบบ (Supabase Auth)
+| หน้า | การทำงาน |
+|---|---|
+| `/login` | เข้าสู่ระบบด้วยอีเมล + รหัสผ่าน |
+| `/register` | สมัครใช้งานเอง → บัญชีรอผู้ดูแลระบบเปิดใช้งานและกำหนดส่วนงาน |
+| `/forgot-password` | ขอลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล |
+| `/reset-password` | ตั้งรหัสผ่านใหม่ (เปิดจากลิงก์ในอีเมล) |
+| `/auth/confirm` | รับลิงก์จากอีเมลของ Supabase ทุกรูปแบบ |
+
+ผู้ดูแลระบบสร้างบัญชีให้ผู้อื่นได้ที่ **ตั้งค่าระบบ → ผู้ใช้งานและสิทธิ์** และกด “ส่งอีเมลตั้งรหัสผ่านใหม่” ได้
+ทุกบัญชีใหม่จะ **ยังไม่ถูกเปิดใช้งาน** จนกว่าผู้ดูแลระบบกำหนดบทบาท/ส่วนงาน (ป้องกันคนนอกเข้าดูข้อมูล)
+
+ข้อแนะนำ Supabase → **Authentication → Sign In / Providers → Email**
+- ถ้าต้องการให้ผู้ใช้ที่ผู้ดูแลระบบสร้างเข้าได้ทันที ให้ **ปิด Confirm email** (การเข้าถึงข้อมูลยังถูกควบคุมด้วยการเปิดใช้งานบัญชี)
+- บริการอีเมลฟรีของ Supabase ส่งได้จำกัดต่อชั่วโมง หากมีผู้ใช้จำนวนมาก ให้ตั้งค่า **Custom SMTP** (เช่น อีเมลองค์กร)
 
 การแก้ไขครั้งต่อไป: อัปโหลดไฟล์ที่แก้ไขขึ้น GitHub แล้ว Vercel จะ deploy ใหม่อัตโนมัติ
 หากต้องแก้ฐานข้อมูล ให้รันเฉพาะไฟล์ migration ใหม่ใน SQL Editor

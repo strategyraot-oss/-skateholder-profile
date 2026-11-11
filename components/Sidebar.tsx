@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { UserRole } from "@/lib/types";
 import { ROLE_LABELS } from "@/lib/domain/reference";
-import { logout } from "@/app/(auth)/login/actions";
+import { logout } from "@/app/(auth)/actions";
 
 const MENU: { href: string; label: string; icon: typeof Database; roles: UserRole[] }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "reviewer", "dept_user"] },

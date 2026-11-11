@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { getSession } from "@/lib/auth";
-import { logout } from "@/app/(auth)/login/actions";
+import { logout } from "@/app/(auth)/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile } = await getSession();

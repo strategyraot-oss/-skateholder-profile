@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient, createIsolatedClient } from "@/lib/supabase/server";
+import { siteOrigin } from "@/lib/origin";
 import type { UserRole } from "@/lib/types";
 
 export type Result = { ok: true; message?: string } | { ok: false; error: string };
@@ -38,19 +38,30 @@ export async function createUser(input: {
     if (!ROLES.includes(input.role)) return { ok: false, error: "บทบาทไม่ถูกต้อง" };
     if (input.role === "dept_user" && !input.department_id) return { ok: false, error: "กรุณาเลือกส่วนงานของผู้ใช้" };
 
-    const sa = createAdminClient();
-    const { data, error } = await sa.auth.admin.createUser({
-      email, password: input.password, email_confirm: true, user_metadata: { full_name: input.full_name },
+    // ใช้ Anon Key สมัครบัญชีแทนผู้ใช้ ผ่าน client แยก (ไม่กระทบ session ของผู้ดูแลระบบ)
+    const iso = createIsolatedClient();
+    const { data, error } = await iso.auth.signUp({
+      email,
+      password: input.password,
+      options: { data: { full_name: input.full_name }, emailRedirectTo: `${await siteOrigin()}/auth/confirm?next=/dashboard` },
     });
-    if (error || !data.user) return { ok: false, error: error?.message ?? "สร้างผู้ใช้ไม่สำเร็จ" };
+    if (error) return { ok: false, error: /already|exists/i.test(error.message) ? "อีเมลนี้มีบัญชีอยู่แล้ว ให้ค้นหาในรายการแล้วแก้ไขสิทธิ์แทน" : error.message };
+    if (!data.user || data.user.identities?.length === 0)
+      return { ok: false, error: "อีเมลนี้มีบัญชีอยู่แล้ว ให้ค้นหาในรายการแล้วแก้ไขสิทธิ์แทน" };
 
-    const { error: pe } = await sa.from("profiles").upsert({
-      id: data.user.id, email, full_name: input.full_name.trim() || email, role: input.role,
-      department_id: input.department_id, active: true,
-    });
+    // profile ถูกสร้างอัตโนมัติด้วย trigger แล้วผู้ดูแลระบบกำหนดสิทธิ์ผ่าน RLS (policy profiles_admin)
+    const supabase = await createClient();
+    const { error: pe } = await supabase.from("profiles").update({
+      full_name: input.full_name.trim() || email, role: input.role, department_id: input.department_id, active: true,
+    }).eq("id", data.user.id);
     if (pe) return { ok: false, error: msg(pe) };
     revalidatePath("/settings");
-    return { ok: true, message: `สร้างบัญชี ${email} แล้ว` };
+    return {
+      ok: true,
+      message: data.session
+        ? `สร้างบัญชี ${email} แล้ว ผู้ใช้เข้าสู่ระบบได้ทันที`
+        : `สร้างบัญชี ${email} แล้ว ผู้ใช้ต้องกดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ`,
+    };
   });
 }
 
@@ -80,13 +91,16 @@ export async function updateUser(input: {
   });
 }
 
-export async function resetPassword(id: string, password: string): Promise<Result> {
+/** ส่งอีเมลลิงก์ตั้งรหัสผ่านใหม่ให้ผู้ใช้ (ผู้ดูแลระบบไม่เห็นและไม่ต้องรู้รหัสผ่านของผู้ใช้) */
+export async function sendPasswordReset(email: string | null): Promise<Result> {
   return wrap(async () => {
     await admin();
-    if (password.length < 8) return { ok: false, error: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร" };
-    const { error } = await createAdminClient().auth.admin.updateUserById(id, { password });
-    if (error) return { ok: false, error: error.message };
-    return { ok: true, message: "ตั้งรหัสผ่านใหม่แล้ว" };
+    if (!email) return { ok: false, error: "บัญชีนี้ไม่มีอีเมล" };
+    const { error } = await createIsolatedClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${await siteOrigin()}/auth/confirm?next=/reset-password`,
+    });
+    if (error) return { ok: false, error: /rate/i.test(error.message) ? "ส่งอีเมลบ่อยเกินไป กรุณารอสักครู่" : error.message };
+    return { ok: true, message: `ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${email} แล้ว` };
   });
 }
 
